@@ -1,0 +1,24 @@
+{
+  "target": "scanme.nmap.org",
+  "ip": "45.33.32.156",
+  "scan_time": "2026-06-08 23:19:01",
+  "duration_seconds": 1.78,
+  "total_scanned": 20,
+  "os_guess": "Unknown (run with sudo for OS detection)",
+  "open_ports": [
+    {
+      "port": 22,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "ssh",
+      "banner": "SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13"
+    },
+    {
+      "port": 80,
+      "protocol": "tcp",
+      "state": "open",
+      "service": "http",
+      "banner": "HTTP/1.1 200 OK\r"
+    }
+  ]
+}

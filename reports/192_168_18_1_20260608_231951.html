@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scan Report — 192.168.18.1</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; padding: 2rem; }
+  h1 { color: #a78bfa; font-size: 1.6rem; margin-bottom: 0.25rem; }
+  .meta { color: #64748b; font-size: 0.85rem; margin-bottom: 2rem; }
+  .stats { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .stat { background: #1e2130; border: 1px solid #2d3147; border-radius: 8px; padding: 1rem 1.5rem; }
+  .stat .val { font-size: 1.8rem; font-weight: 700; color: #a78bfa; }
+  .stat .lbl { font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; background: #1e2130; border-radius: 8px; overflow: hidden; }
+  th { background: #2d3147; padding: 0.75rem 1rem; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; }
+  td { padding: 0.7rem 1rem; border-top: 1px solid #2d3147; font-size: 0.9rem; }
+  .badge { background: #064e3b; color: #34d399; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .banner { font-family: monospace; font-size: 0.8rem; color: #94a3b8; }
+</style>
+</head>
+<body>
+  <h1>Port Scan Report</h1>
+  <p class="meta">Target: <strong>192.168.18.1</strong> | Scanned: 2026-06-08 23:19:51</p>
+  <div class="stats">
+    <div class="stat"><div class="val">3</div><div class="lbl">Open ports</div></div>
+    <div class="stat"><div class="val">20</div><div class="lbl">Ports scanned</div></div>
+    <div class="stat"><div class="val">1.02s</div><div class="lbl">Duration</div></div>
+  </div>
+  <p style="margin-bottom:1rem;color:#94a3b8">OS guess: <strong style="color:#f9a8d4">Unknown (run with sudo for OS detection)</strong></p>
+  <table>
+    <thead><tr><th>Port</th><th>Protocol</th><th>State</th><th>Service</th><th>Banner</th></tr></thead>
+    <tbody>
+        <tr>
+          <td>22</td>
+          <td>TCP</td>
+          <td><span class="badge">OPEN</span></td>
+          <td>ssh</td>
+          <td class="banner">SSH-2.0-dropbear</td>
+        </tr>
+        <tr>
+          <td>80</td>
+          <td>TCP</td>
+          <td><span class="badge">OPEN</span></td>
+          <td>http</td>
+          <td class="banner">HTTP/1.1 501 Not Implemented</td>
+        </tr>
+        <tr>
+          <td>443</td>
+          <td>TCP</td>
+          <td><span class="badge">OPEN</span></td>
+          <td>https</td>
+          <td class="banner">HTTP/1.1 400 Bad Request</td>
+        </tr></tbody>
+  </table>
+</body>
+</html>
