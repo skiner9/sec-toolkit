@@ -213,7 +213,8 @@ def main():
     parser.add_argument("--ports",   default="common", help="common | 1-1024 | 22,80,443")
     parser.add_argument("--threads", type=int,   default=100,  help="Concurrent threads (default 100)")
     parser.add_argument("--timeout", type=float, default=1.0,  help="Seconds to wait per port (default 1.0)")
-    parser.add_argument("--report",  choices=["json","html","both"], default="json")
+    #parser.add_argument("--report",  choices=["json","html","both"], default="json")
+    parser.add_argument("--report",  choices=["json","html","both"], default=None)
     parser.add_argument("--output",  default="reports", help="Folder to save reports")
     args = parser.parse_args()
 
@@ -255,7 +256,7 @@ def main():
         path = save_json(report_data, f"{args.output}/{base}.json")
         out.success(f"JSON report → {path}")
 
-    if args.report in ("html", "both"):
+    elif args.report in ("html", "both"):
         path = save_html(report_data, f"{args.output}/{base}.html")
         out.success(f"HTML report → {path}")
 

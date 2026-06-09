@@ -24,7 +24,7 @@ Each tool covers a different area of offensive and defensive security.
 
 ## Setup
 
-**Requirements:** Python 3.10+, Linux or WSL2
+**Requirements:** Python 3.10+
 
 ```bash
 git clone https://github.com/skiner9/sec-toolkit.git
@@ -36,83 +36,106 @@ pip install -r requirements.txt
 
 ## Tool 1 — Port Scanner
 
-A fast multithreaded TCP port scanner with service detection, banner grabbing,
-and OS fingerprinting. Outputs results to the terminal and generates JSON or HTML reports.
+A fast multithreaded TCP port scanner with service detection, banner grabbing, and OS fingerprinting.
 
 ### How it works
 
-1. Takes a target IP or hostname and a port range as input
-2. Spins up to 500 concurrent threads — each thread checks one port simultaneously
+1. Takes a target IP or hostname and an optional port range as input
+2. Spins up to 100 concurrent threads — each thread checks one port simultaneously
 3. For every open port found, connects again to grab the service banner
 4. Sends an ICMP ping and reads the TTL value to guess the operating system
-5. Saves a report as JSON (for parsing) or HTML (for viewing in browser)
+5. Optionally saves a report as JSON or HTML — **only if you use the `--report` flag**
 
 ### Usage
 
 ```bash
-# Scan common ports
-python3 tools/scanner/scanner.py --target 192.168.1.1
+# Scan default common ports (20 ports total)
+python tools/scanner/scanner.py --target 192.168.1.1
 
-# Scan a full port range
-python3 tools/scanner/scanner.py --target 192.168.1.1 --ports 1-1024 --threads 200
+# Scan a specific port range
+python tools/scanner/scanner.py --target 192.168.1.1 --ports 1-1024
+
+# Scan all ports
+python tools/scanner/scanner.py --target 192.168.1.1 --ports 1-65535
 
 # Scan specific ports only
-python3 tools/scanner/scanner.py --target 192.168.1.1 --ports 22,80,443
+python tools/scanner/scanner.py --target 192.168.1.1 --ports 22,80,443
+
+# Save a JSON report (must be explicitly requested)
+python tools/scanner/scanner.py --target 192.168.1.1 --report json
 
 # Save an HTML report
-python3 tools/scanner/scanner.py --target 192.168.1.1 --report html
+python tools/scanner/scanner.py --target 192.168.1.1 --report html
 
 # Save both JSON and HTML
-python3 tools/scanner/scanner.py --target 192.168.1.1 --report both --output reports/
+python tools/scanner/scanner.py --target 192.168.1.1 --report both --output reports/
 ```
+
+### Default Port Scan
+
+By default (without `--ports`), the scanner checks these **20 common ports**:
+
+| Port | Service | Port | Service |
+|------|---------|------|---------|
+| 21 | FTP | 443 | HTTPS |
+| 22 | SSH | 445 | SMB |
+| 23 | Telnet | 993 | IMAPS |
+| 25 | SMTP | 995 | POP3S |
+| 53 | DNS | 3306 | MySQL |
+| 80 | HTTP | 3389 | RDP |
+| 110 | POP3 | 5900 | VNC |
+| 111 | RPC | 8080 | HTTP-Alt |
+| 135 | RPC | 8443 | HTTPS-Alt |
+| 139 | NetBIOS | 143 | IMAP |
 
 ### Arguments
 
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--target` | required | IP address or hostname to scan |
-| `--ports` | `common` | `common`, `1-1024`, or `22,80,443` |
+| `--ports` | `common` | `common`, `1-1024`, `1-65535`, or `22,80,443` |
 | `--threads` | `100` | Concurrent threads — higher is faster |
 | `--timeout` | `1.0` | Seconds to wait per port before giving up |
-| `--report` | `json` | Output format: `json`, `html`, or `both` |
+| `--report` | none | `json`, `html`, or `both` — not generated unless specified |
 | `--output` | `reports/` | Folder to save report files |
 
-### Example output
+### Example Output
 ==================================================
 Port Scanner v1.0
 sec-toolkit | for authorised use only
-[] Resolved scanme.nmap.org → 45.33.32.156
-[] Target  : scanme.nmap.org (45.33.32.156)
+[] Target  : 192.168.1.1 (192.168.1.1)
 [] Ports   : 20 to scan
-[] Threads : 100 | Timeout: 1.0s
-[+]    22/TCP  ssh          — SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13
-[+]    80/TCP  http         — HTTP/1.1 200 OK
-──────────────────── Scan Complete ────────────────────
-[+] Found 2 open port(s) in 1.78s
-[*] OS guess: Linux / Unix (TTL=54)
-[+] JSON report → reports/45_33_32_156_20260608.json
+[*] Threads : 100 | Timeout: 1.0s
+[+]    22/TCP  ssh          SSH-2.0-OpenSSH_9.2
+[+]    80/TCP  http         HTTP/1.1 200 OK
+[+]   445/TCP  smb
+────────────────── Scan Complete ──────────────────
+[+] Found 3 open port(s) in 1.78s
+[*] OS guess: Windows (TTL=128)
 
 ---
 
-## Project structure
+## Project Structure
 sec-toolkit/
-├── utils/
-│   ├── output.py        # Rich terminal output (colours, progress bar)
-│   └── reporter.py      # JSON and HTML report generation
+│
+├── reports/              # Generated scan output files (JSON/HTML)
+│
 ├── tools/
-│   ├── scanner/         # Phase 1 — port scanner
-│   ├── passaudit/       # Phase 2 — password auditor (coming)
-│   ├── urldetect/       # Phase 3 — phishing detector (coming)
-│   ├── sniffer/         # Phase 4 — packet sniffer (coming)
-│   ├── osint/           # Phase 5 — OSINT recon (coming)
-│   └── logaudit/        # Phase 6 — log analyzer (coming)
-├── reports/             # Generated scan output files
-├── requirements.txt
-└── README.md
+│   └── scanner/
+│       ├── init.py
+│       └── scanner.py    # Main scanner
+│
+├── utils/
+│   ├── init.py
+│   ├── output.py         # Terminal colours and display (rich)
+│   └── reporter.py       # Saves results to JSON/HTML
+│
+├── README.md
+└── requirements.txt
 
 ---
 
-## Skills demonstrated
+## Skills Demonstrated
 
 - Raw socket programming in Python (`socket`, `struct`)
 - Multithreading with `ThreadPoolExecutor` for high-speed scanning
@@ -127,6 +150,7 @@ sec-toolkit/
 
 ## Dependencies
 rich>=13.0.0
+pyfiglet
 
 All other modules (`socket`, `threading`, `struct`, `argparse`, `json`) are Python standard library — no extra installation needed.
 
@@ -134,6 +158,6 @@ All other modules (`socket`, `threading`, `struct`, `argparse`, `json`) are Pyth
 
 ## Legal
 
-This tool is intended for **authorised security testing and educational use only**.
-The author is not responsible for any misuse. Always get written permission before
-scanning any network or system you do not own.
+This tool is intended for authorised security testing and educational use only.
+The author is not responsible for any misuse.
+Always get written permission before scanning any network or system you do not own.
