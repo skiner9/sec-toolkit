@@ -20,8 +20,7 @@ from utils import output as out
 
 
 # ── Default wordlist location ─────────────────────────────────────────────
-WORDLIST_PATH = Path(__file__).parent / "wordlists" / "top10k.txt"
-
+WORDLIST_PATH = Path(__file__).parent / "wordlists" / "crackstation-human.txt"
 
 # ──────────────────────────────────────────────────────────────────────────
 # MODE 1 — Password strength checker
