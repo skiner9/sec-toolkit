@@ -25,12 +25,22 @@ Each tool covers a different area of offensive and defensive security.
 ## Setup
 
 **Requirements:** Python 3.10+
-
-```bash
 git clone https://github.com/skiner9/sec-toolkit.git
 cd sec-toolkit
 pip3 install -r requirements.txt --break-system-packages
-```
+
+### Wordlist Setup (required for hash cracking)
+
+The password cracker uses the **crackstation-human wordlist** (~65 million passwords, ~246MB).
+It is too large to include in the repo — run the setup script to download and extract it:
+bash setup.sh
+
+This will:
+1. Create the `tools/passaudit/wordlists/` directory
+2. Download `crackstation-human-only.txt.gz` (~246MB)
+3. Extract it automatically
+
+> ⚠️ **Note:** You must run `bash setup.sh` before using `--mode crack`. Without the wordlist the cracker will not work.
 
 ---
 
@@ -47,29 +57,20 @@ A fast multithreaded TCP port scanner with service detection, banner grabbing, a
 5. Optionally saves a report as JSON or HTML — only if you use the `--report` flag
 
 ### Usage
-
-```bash
-# Scan default common ports (20 ports total)
+Scan default common ports (20 ports total)
 python3 tools/scanner/scanner.py --target 192.168.1.1
-
-# Scan a specific port range
+Scan a specific port range
 python3 tools/scanner/scanner.py --target 192.168.1.1 --ports 1-1024
-
-# Scan all ports
+Scan all ports
 python3 tools/scanner/scanner.py --target 192.168.1.1 --ports 1-65535
-
-# Scan specific ports only
+Scan specific ports only
 python3 tools/scanner/scanner.py --target 192.168.1.1 --ports 22,80,443
-
-# Save a JSON report (must be explicitly requested)
+Save a JSON report (must be explicitly requested)
 python3 tools/scanner/scanner.py --target 192.168.1.1 --report json
-
-# Save an HTML report
+Save an HTML report
 python3 tools/scanner/scanner.py --target 192.168.1.1 --report html
-
-# Save both JSON and HTML
+Save both JSON and HTML
 python3 tools/scanner/scanner.py --target 192.168.1.1 --report both --output reports/
-```
 
 ### Default Port Scan
 
@@ -100,11 +101,12 @@ By default (without `--ports`), the scanner checks these **20 common ports**:
 | `--output` | `reports/` | Folder to save report files |
 
 ### Example Output
+
 ==================================================
 Port Scanner v1.0
 sec-toolkit | for authorised use only
-[] Target  : 192.168.1.1 (192.168.1.1)
-[] Ports   : 20 to scan
+[*] Target  : 192.168.1.1 (192.168.1.1)
+[*] Ports   : 20 to scan
 [*] Threads : 100 | Timeout: 1.0s
 [+]    22/TCP  ssh          — SSH-2.0-OpenSSH_9.2
 [+]    80/TCP  http         — HTTP/1.1 200 OK
@@ -124,24 +126,20 @@ A three-in-one password auditing tool. Checks how strong a password is, attempts
 The tool has three modes you select with `--mode`:
 
 1. **`check`** — analyses password strength using `zxcvbn` (the same library Dropbox uses). Reports the score, estimated crack time, and suggestions for improvement.
-2. **`crack`** — performs a dictionary attack on a hash. Reads the wordlist line by line, hashes each password, and compares it to the target hash. Supports MD5, SHA1, SHA256, and SHA512 — auto-detected by hash length.
+2. **`crack`** — performs a dictionary attack on a hash using the **65-million password crackstation wordlist**. Reads the wordlist line by line, hashes each password, and compares it to the target hash. Supports MD5, SHA1, SHA256, and SHA512 — auto-detected by hash length.
 3. **`breach`** — checks the Have I Been Pwned database to see if a password has been leaked. Uses **k-anonymity** so the actual password never leaves your machine — only the first 5 characters of its SHA1 hash are sent.
 
+> ⚠️ **Before using `--mode crack`** you must run `bash setup.sh` first to download the wordlist.
+
 ### Usage
-
-```bash
-# Check password strength
+Check password strength
 python3 tools/passaudit/passaudit.py --mode check --password "MyPass123"
-
-# Crack an MD5 hash using the default wordlist
+Crack an MD5 hash using the default wordlist (run bash setup.sh first)
 python3 tools/passaudit/passaudit.py --mode crack --hash 5f4dcc3b5aa765d61d8327deb882cf99
-
-# Crack with a custom wordlist
+Crack with a custom wordlist
 python3 tools/passaudit/passaudit.py --mode crack --hash <hash> --wordlist /path/to/list.txt
-
-# Check if a password has been breached
+Check if a password has been breached
 python3 tools/passaudit/passaudit.py --mode breach --password "password123"
-```
 
 ### Arguments
 
@@ -150,7 +148,7 @@ python3 tools/passaudit/passaudit.py --mode breach --password "password123"
 | `--mode` | always | `check`, `crack`, or `breach` |
 | `--password` | check, breach | The password to analyse |
 | `--hash` | crack | The hash to crack (auto-detects MD5/SHA1/SHA256/SHA512) |
-| `--wordlist` | optional | Path to a wordlist file (default: `top10k.txt`) |
+| `--wordlist` | optional | Path to a custom wordlist (default: `crackstation-human.txt`) |
 
 ### Supported Hash Types
 
@@ -162,6 +160,7 @@ python3 tools/passaudit/passaudit.py --mode breach --password "password123"
 | 128 chars | SHA512 |
 
 ### Example Output
+
 ══════════ Password Strength Analysis ══════════
 Password : MyPass123
 Length   : 9 characters
@@ -169,18 +168,19 @@ Score    : 1/4 — Weak
 Cracks in: 2 hours
 [!] Warning : This is similar to a commonly used password
 [*] Suggestions to improve:
-• Add another word or two
-• Avoid repeated characters
+- Add another word or two
+- Avoid repeated characters
 
 ══════════ Breach Check (HaveIBeenPwned) ══════════
-[] Sending hash prefix 5BAA6 to api.pwnedpasswords.com
-[] Your actual password never leaves this computer (k-anonymity model)
+[*] Sending hash prefix 5BAA6 to api.pwnedpasswords.com
+[*] Your actual password never leaves this computer (k-anonymity model)
 [-] PWNED! This password has been seen 10,434,004 times in breaches.
 [!] Change it everywhere you used it.
 
 ---
 
 ## Project Structure
+
 sec-toolkit/
 │
 ├── reports/                  # Generated scan output files (JSON/HTML)
@@ -194,7 +194,7 @@ sec-toolkit/
 │       ├── init.py
 │       ├── passaudit.py
 │       └── wordlists/
-│           └── top10k.txt    # Top 10,000 leaked passwords
+│           └── crackstation-human.txt   # 65M passwords — downloaded via setup.sh
 │
 ├── utils/
 │   ├── init.py
@@ -202,7 +202,8 @@ sec-toolkit/
 │   └── reporter.py           # Saves results to JSON/HTML
 │
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── setup.sh                  # Downloads the 65M password wordlist
 
 ---
 
@@ -218,7 +219,7 @@ sec-toolkit/
 
 **Tool 2 — Password Auditor**
 - Cryptographic hashing (MD5, SHA1, SHA256, SHA512)
-- Dictionary-based password attacks
+- Dictionary-based password attacks against a 65M entry wordlist
 - Password strength analysis using entropy and pattern detection
 - REST API integration with the Have I Been Pwned service
 - k-anonymity model for privacy-preserving lookups
@@ -231,6 +232,7 @@ sec-toolkit/
 ---
 
 ## Dependencies
+
 rich>=13.0.0      # Terminal colours, tables, progress bars
 zxcvbn>=4.5.0     # Password strength analysis (used by Dropbox)
 bcrypt>=4.0.0     # Bcrypt hash support
