@@ -1,6 +1,4 @@
-You're right — your README has a major formatting problem. The code blocks lost their   markers, so all your commands are running together as one paragraph instead of showing as separate code lines. That's why "Usage" looks like a wall of text.
-Here is a complete clean README. Open README.md in VS Code, delete absolutely everything, then copy-paste this entire block exactly:
-markdown# sec-toolkit
+# sec-toolkit
 
 A modular Python security toolkit built as a hands-on cybersecurity portfolio project.
 Each tool covers a different area of offensive and defensive security.
@@ -18,7 +16,7 @@ Each tool covers a different area of offensive and defensive security.
 | 1 | `scanner` | TCP port scanner with banner grabbing and OS detection | ✅ Complete |
 | 2 | `passaudit` | Password strength checker, hash cracker, breach checker | ✅ Complete |
 | 3 | `urldetect` | ML-based phishing URL classifier (90% accuracy) | ✅ Complete |
-| 4 | `sniffer` | Packet capture and protocol analysis | 🔧 Coming |
+| 4 | `sniffer` | Live packet capture, protocol analysis, PCAP export | ✅ Complete |
 | 5 | `osint` | Automated OSINT recon with HTML report | 🔧 Coming |
 | 6 | `logaudit` | Auth and web log anomaly detector | 🔧 Coming |
 
@@ -56,6 +54,16 @@ The phishing detector includes a pre-trained model in the repo. If you want to r
 ~~~bash
 python3 tools/urldetect/train.py
 ~~~
+
+### Packet Sniffer Setup (Windows only)
+
+The packet sniffer must run on Windows directly (WSL2 does not expose the physical network card). You need:
+
+1. **Npcap** — install from [npcap.com](https://npcap.com/#download) (tick "WinPcap API-compatible Mode" during install)
+2. **Python on Windows** — install from [python.org](https://www.python.org/downloads/) (tick "Add Python to PATH")
+3. **Scapy** — install via `pip install scapy rich` in PowerShell
+
+Run the sniffer from PowerShell **as Administrator**.
 
 ---
 
@@ -338,12 +346,141 @@ Top 5 most important features identified by the model:
 
 ---
 
+## Tool 4 — Packet Sniffer
+
+A live network packet sniffer that captures, decodes, and analyses traffic in real-time. Built with **Scapy** — the same library Wireshark's plugin developers use. Detects cleartext credentials on insecure protocols and exports captures to PCAP files for deeper analysis.
+
+### How it works
+
+1. Opens a raw socket on the network interface (requires Administrator/root)
+2. Captures every packet passing through — IP, TCP, UDP, ICMP
+3. Decodes the protocol layers and shows source/destination, ports, and metadata
+4. Identifies HTTP requests, DNS queries, and HTTPS traffic separately
+5. Scans payloads for cleartext usernames and passwords (FTP, Telnet, HTTP forms, Basic Auth)
+6. Optionally saves the whole capture as a `.pcap` file you can open in Wireshark
+
+### Where to run it
+
+The sniffer runs on **Windows directly** (not WSL2) because WSL2 does not expose your physical network card. The code lives in the WSL2 repo but is executed from **PowerShell as Administrator**.
+
+### Usage
+
+Open PowerShell **as Administrator** and `cd` into the project:
+
+~~~powershell
+cd \\wsl$\Ubuntu\home\YOURUSERNAME\sec-toolkit
+~~~
+
+**List all network interfaces:**
+~~~powershell
+python tools\sniffer\sniffer.py --list-interfaces
+~~~
+
+**Capture any 20 packets (auto-pick main interface):**
+~~~powershell
+python tools\sniffer\sniffer.py --count 20
+~~~
+
+**Capture only DNS queries (shows every domain your PC contacts):**
+~~~powershell
+python tools\sniffer\sniffer.py --filter "udp port 53" --count 15
+~~~
+
+**Capture HTTP traffic and save to a PCAP file:**
+~~~powershell
+python tools\sniffer\sniffer.py --filter "tcp port 80" --count 30 --output reports\http-capture.pcap
+~~~
+
+**Capture HTTPS traffic:**
+~~~powershell
+python tools\sniffer\sniffer.py --filter "tcp port 443" --count 50
+~~~
+
+**Capture ping (ICMP) traffic:**
+~~~powershell
+python tools\sniffer\sniffer.py --filter "icmp" --count 10
+~~~
+
+**Capture forever until you press Ctrl+C:**
+~~~powershell
+python tools\sniffer\sniffer.py --filter "tcp port 80"
+~~~
+
+### Arguments
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--iface` | auto-detect | Network interface to capture on |
+| `--filter` | none | BPF filter (e.g. `tcp port 80`, `udp port 53`, `icmp`) |
+| `--count` | unlimited | Stop after N packets (0 = unlimited, Ctrl+C to stop) |
+| `--output` | none | Save captured packets to a `.pcap` file |
+| `--list-interfaces` | — | List network interfaces and exit |
+
+### BPF Filter Examples
+
+The `--filter` argument uses the same syntax as `tcpdump` and Wireshark.
+
+| Filter | What it captures |
+|--------|------------------|
+| `tcp` | All TCP traffic |
+| `udp` | All UDP traffic |
+| `icmp` | All ping traffic |
+| `tcp port 80` | HTTP traffic |
+| `tcp port 443` | HTTPS traffic |
+| `udp port 53` | DNS queries |
+| `host 8.8.8.8` | Traffic to/from a specific IP |
+| `port 22` | SSH traffic |
+
+### Credential Detection
+
+The sniffer scans every packet payload for cleartext credentials and flags them in red. It detects:
+
+- FTP usernames (`USER` command)
+- FTP passwords (`PASS` command)
+- Telnet logins
+- HTTP form usernames and passwords (`username=`, `password=` in POST data)
+- HTTP Basic Authentication headers
+
+This demonstrates exactly **why HTTPS matters** — without encryption, anyone on the same network can read your credentials.
+
+### Example Output
+
+~~~
+==================================================
+  Packet Sniffer v1.0
+  sec-toolkit | for authorised use only
+==================================================
+
+[*] Interface : auto-detect
+[*] Filter    : udp port 53
+[*] Count     : 15
+
+──────────────────── Live Capture ────────────────────
+DNS   192.168.18.27 → 192.168.18.1  query: www.google.com
+DNS   192.168.18.27 → 192.168.18.1  query: collector.github.com
+DNS   192.168.18.27 → 192.168.18.1  query: encrypted-tbn0.gstatic.com
+DNS   192.168.18.1 → 192.168.18.27  query: www.google.com
+
+──────────────────── Capture Summary ────────────────────
+[+] Captured 15 packets
+
+  UDP          15
+  DNS          15
+~~~
+
+~~~
+HTTP  192.168.18.27 → 82.148.119.144:80  GET http://www.msftconnecttest.com/connecttest.txt
+HTTP  192.168.18.27 → 98.98.225.200:80  POST http://nephobox.com/statistics?clienttype=9&ver=1
+~~~
+
+---
+
 ## Project Structure
 
 ~~~
 sec-toolkit/
 │
-├── reports/                       # Generated scan output files
+├── reports/                       # Generated scan output files (JSON/HTML/PCAP)
 │
 ├── tools/
 │   ├── scanner/                   # Tool 1 — port scanner
@@ -355,16 +492,20 @@ sec-toolkit/
 │   │   ├── passaudit.py
 │   │   └── wordlists/             # 65M password list (via setup.sh)
 │   │
-│   └── urldetect/                 # Tool 3 — phishing URL detector
+│   ├── urldetect/                 # Tool 3 — phishing URL detector
+│   │   ├── __init__.py
+│   │   ├── urldetect.py
+│   │   ├── train.py
+│   │   ├── features.py
+│   │   ├── data/
+│   │   │   └── urls.csv           # Training dataset
+│   │   └── models/
+│   │       ├── phishing_model.joblib
+│   │       └── feature_names.joblib
+│   │
+│   └── sniffer/                   # Tool 4 — packet sniffer
 │       ├── __init__.py
-│       ├── urldetect.py
-│       ├── train.py
-│       ├── features.py
-│       ├── data/
-│       │   └── urls.csv           # Training dataset
-│       └── models/
-│           ├── phishing_model.joblib
-│           └── feature_names.joblib
+│       └── sniffer.py
 │
 ├── utils/
 │   ├── __init__.py
@@ -402,6 +543,13 @@ sec-toolkit/
 - Handling imbalanced datasets and false positives
 - Combining ML predictions with rule-based heuristics
 
+**Tool 4 — Packet Sniffer**
+- Raw packet capture with `scapy` and Npcap
+- BPF (Berkeley Packet Filter) syntax for protocol filtering
+- Layer 2–7 protocol decoding (TCP, UDP, ICMP, HTTP, DNS)
+- Regex-based payload inspection for credential detection
+- PCAP file export and Wireshark interoperability
+
 **Across the toolkit**
 - CLI tool design with `argparse`
 - Terminal UI with `rich` (colours, tables, progress bars)
@@ -422,6 +570,7 @@ pandas>=2.0.0        # Dataset handling
 numpy>=1.24.0        # Numerical operations
 tldextract>=5.0.0    # Domain parsing
 joblib>=1.3.0        # Model persistence
+scapy>=2.5.0         # Packet capture and analysis
 ~~~
 
 All other modules (`socket`, `threading`, `struct`, `argparse`, `json`, `hashlib`, `re`) are Python standard library.
@@ -432,4 +581,4 @@ All other modules (`socket`, `threading`, `struct`, `argparse`, `json`, `hashlib
 
 This tool is intended for **authorised security testing and educational use only**.
 The author is not responsible for any misuse.
-Always get written permission before scanning any network or system you do not own.
+Always get written permission before scanning, sniffing, or probing any network or system you do not own.
